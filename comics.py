@@ -6,6 +6,7 @@ import gtk
 
 import Image
 import urllib
+import simplejson
 from datetime import datetime
 
 class Comics:
@@ -40,7 +41,7 @@ class Comics:
         table.attach(notebook, 0,6,0,1)
         notebook.show()
         self.show_tabs = True
-        self.show_border = True
+        self.show_border = False
 
         for plugin_class in BaseComicsPlugin.plugins:
             plugin = plugin_class()
@@ -84,6 +85,16 @@ class CalvinAndHobbesPlugin(BaseComicsPlugin):
                                                                     date.strftime("%Y"),
                                                                     date.strftime("%y%m%d")
                                                                     )
+
+class XKCDPlugin(BaseComicsPlugin):
+    comic_name = "XKCD"
+    comic_author = "Randall Munroe"
+
+    def get_comic_url(self, date=datetime.today()):
+        xkcd_url = "http://xkcd.com/info.0.json"
+        xkcd_data = urllib.urlopen(xkcd_url)
+        json = simplejson.loads(xkcd_data.read())
+        return json["img"]
 
 def main():
     gtk.main()
