@@ -4,6 +4,7 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 
+import Image
 import urllib
 from datetime import datetime
 
@@ -47,14 +48,17 @@ class Comics:
 
             frame = gtk.Frame()
             frame.set_border_width(10)
-            frame.set_size_request(100, 75)
-            frame.show()
 
             image = gtk.Image()
             image_file = self.get_image_from_url(plugin.comic_url)
             image.set_from_file(image_file)
             frame.add(image)
             image.show()
+
+            image_data = Image.open(image_file)
+            x_size, y_size = image_data.size
+            frame.set_size_request(x_size, y_size)
+            frame.show()
 
             label = gtk.Label(title)
             notebook.append_page(frame, label)
