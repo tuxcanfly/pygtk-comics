@@ -42,15 +42,15 @@ class Comics:
         self.show_tabs = True
         self.show_border = True
 
-        for plugin_enabled in plugins_enabled:
-            plugin = plugin_enabled()
+        for plugin_class in BaseComicsPlugin.plugins:
+            plugin = plugin_class()
             title = plugin.comic_name
 
             frame = gtk.Frame()
             frame.set_border_width(10)
 
             image = gtk.Image()
-            image_file = self.get_image_from_url(plugin.comic_url)
+            image_file = self.get_image_from_url(plugin.get_comic_url())
             image.set_from_file(image_file)
             frame.add(image)
             image.show()
@@ -65,30 +65,27 @@ class Comics:
         
         table.show()
 
-class BaseComicsPlugin:
-    def __init__(self, comic_name, comic_author=None):
-        self.comic_name = comic_name
-        self.comic_author = comic_author
-        self.comic_url = self._get_image_url()
+class RegisteredPlugin(type):
+    def __init__(cls, name, bases, attrs):
+        if not hasattr(cls, 'plugins'):
+            cls.plugins = []
+        else:
+            cls.plugins.append(cls)
 
-    def _get_image_url(self, date=datetime.today()):
-        pass
+class BaseComicsPlugin(object):
+    __metaclass__ = RegisteredPlugin
 
 class CalvinAndHobbesPlugin(BaseComicsPlugin):
-    def __init__(self):
-        BaseComicsPlugin.__init__(self, comic_name="Calvin and Hobbes", 
-                                        comic_author="by Bill Waterson")
+    comic_name = "Calvin and Hobbes"
+    comic_author = "Bill Waterson"
 
-
-    def _get_image_url(self, date=datetime.today()):
+    def get_comic_url(self, date=datetime.today()):
         return "http://picayune.uclick.com/comics/ch/%s/ch%s.gif" %(
                                                                     date.strftime("%Y"),
                                                                     date.strftime("%y%m%d")
                                                                     )
-plugins_enabled = [CalvinAndHobbesPlugin]
 
 def main():
-
     gtk.main()
     return 0
 
