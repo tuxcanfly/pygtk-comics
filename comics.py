@@ -13,20 +13,9 @@ class Comics:
         gtk.main_quit()
         return False
 
-    # is invoked when the button is clicked.  It just prints a message.
-    def button_clicked(self, widget, data=None):
-        print "button %s clicked" % data
-
-    def get_comic_image(self):
-        filepath, status = urllib.urlretrieve(self.get_comic_url())
+    def get_image_from_url(self, url):
+        filepath, status = urllib.urlretrieve(url)
         return filepath
-
-    def get_comic_url(self):
-        today = datetime.now()
-        return "http://picayune.uclick.com/comics/ch/%s/ch%s.gif" %(
-                                                                    today.strftime("%Y"),
-                                                                    today.strftime("%y%m%d")
-                                                                    )
 
     def __init__(self):
         # create the main window, and attach delete_event signal to terminating
@@ -36,22 +25,66 @@ class Comics:
         window.set_border_width(10)
         window.show()
 
-        # a horizontal box to hold the buttons
-        hbox = gtk.HBox()
-        hbox.show()
-        window.add(hbox)
-
         # no decoration
-        window.set_decorated(False)
-        window.set_keep_below(True)
-        window.set_skip_taskbar_hint(True)
+        #window.set_decorated(False)
+        #window.set_keep_below(True)
+        #window.set_skip_taskbar_hint(True)
 
-        image = gtk.Image()
-        image.set_from_file(self.get_comic_image())
-        image.show()
-        hbox.pack_start(image)
+        table = gtk.Table(3,6,False)
+        window.add(table)
+
+        # Create a new notebook, place the position of the tabs
+        notebook = gtk.Notebook()
+        notebook.set_tab_pos(gtk.POS_TOP)
+        table.attach(notebook, 0,6,0,1)
+        notebook.show()
+        self.show_tabs = True
+        self.show_border = True
+
+        for plugin_enabled in plugins_enabled:
+            plugin = plugin_enabled()
+            title = plugin.comic_name
+
+            frame = gtk.Frame()
+            frame.set_border_width(10)
+            frame.set_size_request(100, 75)
+            frame.show()
+
+            image = gtk.Image()
+            image_file = self.get_image_from_url(plugin.comic_url)
+            image.set_from_file(image_file)
+            frame.add(image)
+            image.show()
+
+            label = gtk.Label(title)
+            notebook.append_page(frame, label)
+        
+        table.show()
+
+class BaseComicsPlugin:
+    def __init__(self, comic_name, comic_author=None):
+        self.comic_name = comic_name
+        self.comic_author = comic_author
+        self.comic_url = self._get_image_url()
+
+    def _get_image_url(self, date=datetime.today()):
+        pass
+
+class CalvinAndHobbesPlugin(BaseComicsPlugin):
+    def __init__(self):
+        BaseComicsPlugin.__init__(self, comic_name="Calvin and Hobbes", 
+                                        comic_author="by Bill Waterson")
+
+
+    def _get_image_url(self, date=datetime.today()):
+        return "http://picayune.uclick.com/comics/ch/%s/ch%s.gif" %(
+                                                                    date.strftime("%Y"),
+                                                                    date.strftime("%y%m%d")
+                                                                    )
+plugins_enabled = [CalvinAndHobbesPlugin]
 
 def main():
+
     gtk.main()
     return 0
 
