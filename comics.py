@@ -22,6 +22,7 @@ import gtk
 
 import Image
 import urllib
+import feedparser
 import simplejson
 from datetime import datetime
 
@@ -111,6 +112,15 @@ class XKCDPlugin(BaseComicsPlugin):
         xkcd_data = urllib.urlopen(xkcd_url)
         json = simplejson.loads(xkcd_data.read())
         return json["img"]
+
+class DilbertPlugin(BaseComicsPlugin):
+    comic_name = "Dilbert"
+    comic_author = "Scott Adams"
+
+    def get_comic_url(self, data=datetime.today()):
+        dilbert_url = "http://pipes.yahoo.com/pipes/pipe.run?_id=44e23d1c1507ad6741685fe23c81cb51&_render=rss"
+        feed = feedparser.parse(dilbert_url)
+        return feed['entries'][0]['summary']
 
 def main():
     gtk.main()

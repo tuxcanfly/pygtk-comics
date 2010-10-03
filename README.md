@@ -5,6 +5,7 @@ Right now it supports:
 
 * Calvin and Hobbes
 * XKCD
+* Dilbert
 
 It is really simple to add another comic, you just need to specify the name,
 author and a way to get the latest comic image url. Take a look at the code for
