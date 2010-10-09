@@ -20,11 +20,14 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 
+import os
 import Image
 import urllib
 import feedparser
 import simplejson
 from datetime import datetime
+
+COMICS_PATH = os.environ['HOME'] + '/.local/share/comics'
 
 class Comics:
     # when invoked (via signal delete_event), terminates the application.
@@ -32,25 +35,34 @@ class Comics:
         gtk.main_quit()
         return False
 
-    def get_image_from_url(self, url):
-        filepath, status = urllib.urlretrieve(url)
+    def get_image_from_url(self, url, location):
+        if os.path.isfile(location):
+            filepath = location
+        else:
+            filepath, status = urllib.urlretrieve(url, location)
         return filepath
 
     def __init__(self):
         # create the main window, and attach delete_event signal to terminating
         # the application
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.connect("delete_event", self.close_application)
-        window.set_border_width(10)
-        window.show()
+        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window.connect("delete_event", self.close_application)
+        self.window.set_border_width(10)
+        self.window.show()
+
+        self.page_data = {}
+
+        # ensure cache dir
+        if not os.path.isdir(COMICS_PATH):
+            os.makedirs(COMICS_PATH)
 
         # no decoration
-        #window.set_decorated(False)
-        #window.set_keep_below(True)
-        #window.set_skip_taskbar_hint(True)
+        #self.window.set_decorated(False)
+        #self.window.set_keep_below(True)
+        #self.window.set_skip_taskbar_hint(True)
 
         table = gtk.Table(3,6,False)
-        window.add(table)
+        self.window.add(table)
 
         # Create a new notebook, place the position of the tabs
         notebook = gtk.Notebook()
@@ -60,28 +72,45 @@ class Comics:
         self.show_tabs = True
         self.show_border = False
 
-        for plugin_class in BaseComicsPlugin.plugins:
+        notebook.connect("switch-page", self._page_switched)
+
+        for page_num, plugin_class in enumerate(BaseComicsPlugin.plugins):
+            #assuming all plugins are active
             plugin = plugin_class()
             title = plugin.comic_name
 
             frame = gtk.Frame()
             frame.set_border_width(10)
-
-            image = gtk.Image()
-            image_file = self.get_image_from_url(plugin.get_comic_url())
-            image.set_from_file(image_file)
-            frame.add(image)
-            image.show()
-
-            image_data = Image.open(image_file)
-            x_size, y_size = image_data.size
-            frame.set_size_request(x_size, y_size)
+            # pickle plugin data for lazy load
+            self.page_data[page_num] = plugin
             frame.show()
 
             label = gtk.Label(title)
             notebook.append_page(frame, label)
         
         table.show()
+
+    def _page_switched(self, notebook, page, page_num):
+        try:
+            plugin = self.page_data[page_num]
+        except:
+            # tab not intialized by us, so no comic here
+            return
+        cur_frame = notebook.get_nth_page(page_num)
+        
+        try:
+            image = cur_frame.get_children()[0]
+        except IndexError:
+            image = gtk.Image()
+        location = "%s/%s-%s" %(COMICS_PATH, plugin.comic_name, datetime.today().strftime("%d-%m-%Y"))
+        image_file = self.get_image_from_url(plugin.get_comic_url(), location)
+        image.set_from_file(image_file)
+        cur_frame.add(image)
+        image.show()
+
+        image_data = Image.open(image_file)
+        x_size, y_size = image_data.size
+        self.window.resize(x_size, y_size)
 
 class RegisteredPlugin(type):
     def __init__(cls, name, bases, attrs):
