@@ -27,7 +27,11 @@ import feedparser
 import simplejson
 from datetime import datetime
 
+from resizableimage import ResizableImage
+
 COMICS_PATH = os.environ['HOME'] + '/.local/share/comics'
+X_PADDING = 50
+Y_PADDING = 90
 
 class Comics:
     # when invoked (via signal delete_event), terminates the application.
@@ -101,7 +105,7 @@ class Comics:
         try:
             image = cur_frame.get_children()[0]
         except IndexError:
-            image = gtk.Image()
+            image = ResizableImage()
         location = "%s/%s-%s" %(COMICS_PATH, plugin.comic_name, datetime.today().strftime("%d-%m-%Y"))
         image_file = self.get_image_from_url(plugin.get_comic_url(), location)
         image.set_from_file(image_file)
@@ -110,7 +114,7 @@ class Comics:
 
         image_data = Image.open(image_file)
         x_size, y_size = image_data.size
-        self.window.resize(x_size, y_size)
+        self.window.resize(x_size + X_PADDING, y_size + Y_PADDING)
 
 class RegisteredPlugin(type):
     def __init__(cls, name, bases, attrs):
