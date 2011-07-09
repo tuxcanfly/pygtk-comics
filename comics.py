@@ -53,6 +53,9 @@ class Comics:
         self.window.connect("delete_event", self.close_application)
         self.window.set_border_width(10)
         self.window.show()
+        theme = gtk.icon_theme_get_default()
+        icon = theme.load_icon("face-smile", 36, gtk.ICON_LOOKUP_FORCE_SVG) 
+        self.window.set_icon(icon)
 
         self.page_data = {}
 
