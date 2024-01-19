@@ -158,6 +158,15 @@ class DilbertPlugin(BaseComicsPlugin):
         feed = feedparser.parse(dilbert_url)
         return feed['entries'][0]['summary']
 
+class SMBCPlugin(BaseComicsPlugin):
+    comic_name = "Saturday Morning Breakfast Cereal"
+    comic_author = "Zach Weinersmith"
+    
+    def get_comic_url(self, date=datetime.today()):
+        smbc_url = "https://www.smbc-comics.com/comic/rss"
+        feed = feedparser.parse(smbc_url)
+        return feed['entries'][0]['description']
+
 def main():
     gtk.main()
     return 0
